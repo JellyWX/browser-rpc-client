@@ -26,25 +26,44 @@ void discordInit()
     memset(&handlers, 0, sizeof(handlers));
     handlers.disconnected = handleDiscordDisconnected;
     handlers.errored = handleDiscordError;
-    Discord_Initialize("455298663598653446", &handlers, 1, NULL);
+    Discord_Initialize("457160064134938624", &handlers, 1, NULL);
 }
 
-int main() {
+int main(int args_n, char** args) {
+  std::string email;
+
+  if (args_n < 2) {
+    std::cout << "Please provide your email as an argument" << std::endl;
+    return -1;
+  } else {
+    email = args[1];
+  }
+
+
   discordInit();
 
   const std::time_t start_time = std::time(nullptr);
 
   while(true){
 
-    auto response = cpr::Get(cpr::Url{"https://jsonplaceholder.typicode.com/posts/1"});//, cpr::Header{{"email", "judewrs@gmail.com"}});
-    std::cout << response.text << std::endl;
-    //auto json = nlohmann::json::parse(response.text);
-    //std::cout << json.dump(4) << std::endl;
+    cpr::Response response;
+
+    do {
+      response = cpr::Get(cpr::Url{"https://rpc.jellywx.co.uk/"}, cpr::Header{{"email", email}});
+    } while(response.text[0] != '{');
+
+    auto json = nlohmann::json::parse(response.text);
+    std::cout << json.dump(4) << std::endl;
+
+    std::string state = json["state"];
 
     DiscordRichPresence drpc;
     memset(&drpc, 0, sizeof(drpc)); // sets the memory block to all zeros
-    drpc.state = "Browsing the web";
-    drpc.details = response.text.c_str();
+
+    drpc.details = "Browsing the web";
+    drpc.state = state.c_str();
+    drpc.largeImageKey = "main";
+
     drpc.startTimestamp = start_time;
 
     Discord_UpdatePresence(&drpc);
